@@ -49,7 +49,7 @@ class MultiClassModel(pl.LightningModule):
         pooler = hidden_state[:, 0]
         # Output size (batch size = 20 baris, sequence length = 100 kata / token, hidden_size = 768 tensor jumlah vektor representation dari)
 
-         # pre classifier untuk mentransfer wight output ke epch selanjuntya
+        # pre classifier untuk mentransfer wight output ke epch selanjuntya
         pooler = self.pre_classifier(pooler)
         # kontrol hasil pooler min -1 max 1
         pooler = torch.nn.Tanh()(pooler)

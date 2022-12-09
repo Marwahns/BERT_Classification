@@ -29,4 +29,4 @@ if __name__ == '__main__':
     )
 
     trainer.fit(model, datamodule = dm)
-    pred, true = trainer.predict(model = model, datamodule = dm)
+    #pred, true = trainer.predict(model = model, datamodule = dm)
