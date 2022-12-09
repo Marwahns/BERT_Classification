@@ -22,7 +22,7 @@ if __name__ == '__main__':
     logger = TensorBoardLogger("logs", name="bert-multi-class")
 
     trainer = pl.Trainer(
-        #gpus = 1,
+        gpus = 1,
         max_epochs = 10,
         #"bert_classification/checkpoints/class"
         default_root_dir = "./checkpoints/class"
