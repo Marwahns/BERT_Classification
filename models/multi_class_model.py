@@ -8,7 +8,7 @@ import pytorch_lightning as pl
 from transformers import BertModel
 from sklearn.metrics import classification_report
 
-import torchmetrics
+from torchmetrics import Accuracy
 
 class MultiClassModel(pl.LightningModule):
     def __init__(self,
@@ -87,17 +87,16 @@ class MultiClassModel(pl.LightningModule):
 
         loss = self.criterion(out, target = y.float())
 
-        #pred = out.argmax(1).cpu()
-        #true = y.argmax(1).cpu()
-
-        report = classification_report(true, pred, output_dict = True, zero_division = 0)
+        # pred = out.argmax(1).cpu()
+        # true = y.argmax(1).cpu()
 
         self.accuracy(out, y)
+        # report = classification_report(true, pred, output_dict = True, zero_division = 0)
 
-        self.log("accuracy", self.accuracy, prog_bar = True)
+        self.log("accuracy", report["accuracy"], prog_bar = True)
         self.log("loss", loss)
 
-        return loss
+        return {"loss": loss, "predictions": out, "labels": y}
 
     def validation_step(self, batch, batch_idx):
         # Tidak transfer weight
@@ -110,13 +109,13 @@ class MultiClassModel(pl.LightningModule):
 
         loss = self.criterion(out, target = y.float())
 
-        #pred = out.argmax(1).cpu()
-        #true = y.argmax(1).cpu()
+        pred = out.argmax(1).cpu()
+        true = y.argmax(1).cpu()
 
-        #report = classification_report(true, pred, output_dict = True, zero_division = 0)
+        # report = classification_report(true, pred, output_dict = True, zero_division = 0)
         self.accuracy(out, y)
 
-        self.log("accuracy", self.accuracy, prog_bar = True)
+        self.log("accuracy", report["accuracy"], prog_bar = True)
         self.log("loss", loss)
 
         return loss
@@ -129,7 +128,50 @@ class MultiClassModel(pl.LightningModule):
                    attention_mask = x_attention_mask,
                    token_type_ids = x_token_type_ids)
         # Ke tiga parameter di input dan di olah oleh method / function forward
+
         pred = out.argmax(1).cpu()
         true = y.argmax(1).cpu()
 
-        return pred, true
+        # return [pred, true]
+        return {"predictions": pred, "labels": true}
+
+    def training_epoch_end(self, outputs):
+        labels = []
+        predictions = []
+
+        for output in outputs:
+            for out_lbl in output["labels"].detach().cpu():
+                labels.append(out_lbl)
+            for out_pred in output["predictions"].detach().cpu():
+                predictions.append(out_pred)
+
+        labels = torch.stack(labels).int()
+        predictions = torch.stack(predictions)
+
+        # Hitung akurasi
+        accuracy = Accuracy(task = "multiclass")
+        acc = accuracy(predictions, labels)
+
+        # Print Akurasinya
+        print("Overall Training Accuracy : ", acc)
+
+    def on_predict_epoch_end(self, outputs):
+        labels = []
+        predictions = []
+
+        for output in outputs:
+            # print(output[0]["predictions"][0])
+            # print(len(output))
+            # break
+            for out in output:
+                for out_lbl in out["labels"].detach().cpu():
+                    labels.append(out_lbl)
+                for out_pred in out["predictions"].detach().cpu():
+                    predictions.append(out_pred)
+
+        labels = torch.stack(labels).int()
+        predictions = torch.stack(predictions)
+
+        accuracy = Accuracy(task = "multiclass")
+        acc = accuracy(predictions, labels)
+        print("Overall Testing Accuracy : ", acc)
