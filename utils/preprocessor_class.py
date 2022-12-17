@@ -21,10 +21,16 @@ class PreprocessorClass(pl.LightningDataModule):
 
     def __init__(self,
                  preprocessed_dir,
+                 train_data_dir = "data/training.res",
+                 test_data_dir = "data/testing.res",
                  batch_size = 10,
-                 max_length = 100):
+                 max_length = 100,):
 
         super(PreprocessorClass, self).__init__()
+
+        self.train_data_dir = train_data_dir
+        self.test_data_dir = test_data_dir
+
         self.label2id = {
             'bola': 0,
             'news': 1,
@@ -74,11 +80,11 @@ class PreprocessorClass(pl.LightningDataModule):
 
     def load_data(self,):
         # "bert_classification/data/training.res"
-        with open("data/training.res", "rb") as tdr:
+        with open(self.train_data_dir, "rb") as tdr:
             train_pkl = pickle.load(tdr)
             train = pd.DataFrame({'title': train_pkl[0], 'label': train_pkl[1]})
         # "bert_classification/data/testing.res"
-        with open("data/testing.res", "rb") as tsdr:
+        with open(self.test_data_dir, "rb") as tsdr:
             test_pkl = pickle.load(tsdr)
             test = pd.DataFrame({'title': test_pkl[0], 'label': test_pkl[1]})
         

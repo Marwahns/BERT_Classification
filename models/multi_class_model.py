@@ -8,6 +8,8 @@ import pytorch_lightning as pl
 from transformers import BertModel
 from sklearn.metrics import classification_report
 
+import torchmetrics
+
 class MultiClassModel(pl.LightningModule):
     def __init__(self,
                  dropout,
@@ -38,6 +40,8 @@ class MultiClassModel(pl.LightningModule):
 
         # menghitung loss function
         self.criterion = nn.BCEWithLogitsLoss()
+
+        self.accuracy = torchmetrics.Accuracy(task="multiclass")
 
     # mengambil input dari bert, pre_classifier
     def forward(self, input_ids, attention_mask, token_type_ids):
@@ -83,12 +87,14 @@ class MultiClassModel(pl.LightningModule):
 
         loss = self.criterion(out, target = y.float())
 
-        pred = out.argmax(1).cpu()
-        true = y.argmax(1).cpu()
+        #pred = out.argmax(1).cpu()
+        #true = y.argmax(1).cpu()
 
         report = classification_report(true, pred, output_dict = True, zero_division = 0)
 
-        self.log("accuracy", report["accuracy"], prog_bar = True)
+        self.accuracy(out, y)
+
+        self.log("accuracy", self.accuracy, prog_bar = True)
         self.log("loss", loss)
 
         return loss
@@ -104,12 +110,13 @@ class MultiClassModel(pl.LightningModule):
 
         loss = self.criterion(out, target = y.float())
 
-        pred = out.argmax(1).cpu()
-        true = y.argmax(1).cpu()
+        #pred = out.argmax(1).cpu()
+        #true = y.argmax(1).cpu()
 
-        report = classification_report(true, pred, output_dict = True, zero_division = 0)
+        #report = classification_report(true, pred, output_dict = True, zero_division = 0)
+        self.accuracy(out, y)
 
-        self.log("accuracy", report["accuracy"], prog_bar = True)
+        self.log("accuracy", self.accuracy, prog_bar = True)
         self.log("loss", loss)
 
         return loss
